@@ -115,30 +115,6 @@ raft-state/
     └── raft-stable.db
 ```
 
-## Integration with Kubernetes
-
-Example Kubernetes manifests are provided in the `k8s/` directory:
-
-- **`k8s/job-simple.yaml`** - Simple one-time Job to generate Raft state
-- **`k8s/job-conditional.yaml`** - Job that checks if state exists before generating
-- **`k8s/statefulset-init-container.yaml`** - Example StatefulSet with init container
-- **`k8s/kustomization.yaml`** - Kustomize configuration for deployment
-
-### Quick Start
-
-```bash
-# Deploy the simple job
-kubectl apply -f k8s/job-simple.yaml
-
-# Or use kustomize
-kubectl apply -k k8s/
-
-# Check job status
-kubectl get jobs -n optimism
-```
-
-See [k8s/README.md](k8s/README.md) for detailed deployment instructions.
-
 ## Deployment Steps
 
 1. **Generate pre-configured state** using one of the methods above
@@ -203,21 +179,6 @@ This will display the contents of both the stable store and log store, showing:
 - Current term and voting information
 - Configuration entries with all cluster members
 - Log indices and metadata
-
-## Docker Build
-
-```dockerfile
-FROM golang:1.21-alpine as builder
-WORKDIR /app
-COPY . .
-RUN go build -o op-conductor-init ./cmd/main
-
-FROM alpine:latest
-RUN apk --no-cache add ca-certificates
-WORKDIR /root/
-COPY --from=builder /app/op-conductor-init .
-ENTRYPOINT ["./op-conductor-init"]
-```
 
 ## Important Notes
 

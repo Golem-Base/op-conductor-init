@@ -1,0 +1,56 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: Test
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "**.md"
+      - "LICENSE"
+      - ".gitignore"
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - "**.md"
+      - "LICENSE"
+      - ".gitignore"
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+
+      - name: Set up Go
+        uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 # v5.0.0
+        with:
+          go-version-file: "go.mod"
+
+      - name: Install dependencies
+        run: go mod download
+
+      - name: Run tests
+        run: go test -v -race -coverprofile=coverage.out ./...
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+
+      - name: Set up Go
+        uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 # v5.0.0
+        with:
+          go-version-file: "go.mod"
+
+      - name: Install revive
+        run: go install github.com/mgechev/revive@latest
+
+      - name: Run revive
+        run: revive -config .revive.toml ./...

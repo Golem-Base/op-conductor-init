@@ -1,0 +1,53 @@
+# direnv
+.direnv
+.envrc.local
+
+# nix
+result*
+repl-result*
+
+# binaries
+/bin/
+
+# claude
+.claude/
+CLAUDE.md
+
+# other
+tmp/
+
+# Binaries
+/bin/
+
+# Build artifacts
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool
+*.out
+
+# Go vendor directory
+/vendor/
+
+# Example output
+/example-state/
+/raft-state/
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Goreleaser
+dist/

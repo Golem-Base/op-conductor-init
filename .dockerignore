@@ -1,0 +1,39 @@
+# Binaries
+/bin/
+op-conductor-init
+op-conductor-verify
+
+# Git files
+.git/
+.gitignore
+
+# Documentation
+README.md
+*.md
+
+# Example/test data
+/example-state/
+/raft-state/
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test files
+*_test.go
+*.test
+
+# Docker files (avoid recursion)
+Dockerfile*
+.dockerignore
+
+# Kubernetes files
+*.yaml
+*.yml

@@ -34,11 +34,6 @@ archives:
   - id: default
     name_template: >-
       {{ .ProjectName }}_ {{- .Version }}_ {{- title .Os }}_ {{- if eq .Arch "amd64" }}x86_64 {{- else if eq .Arch "386" }}i386 {{- else }}{{ .Arch }}{{ end }} {{- if .Arm }}v{{ .Arm }}{{ end }}
-    format: tar.gz
-    # Windows gets zip
-    format_overrides:
-      - goos: windows
-        format: zip
     files:
       - LICENSE*
       - README.md
@@ -58,11 +53,10 @@ dockers:
       - "golemnetwork/op-conductor-init:v{{ .Major }}-amd64"
       - "golemnetwork/op-conductor-init:v{{ .Major }}.{{ .Minor }}-amd64"
       - "golemnetwork/op-conductor-init:latest-amd64"
-    dockerfile: Dockerfile
+    dockerfile: Dockerfile.goreleaser
     use: buildx
-    extra_files:
-      - go.mod
-      - go.sum
+    ids:
+      - op-conductor-init
     build_flag_templates:
       - "--platform=linux/amd64"
       - "--label=org.opencontainers.image.created={{.Date}}"
@@ -79,11 +73,10 @@ dockers:
       - "golemnetwork/op-conductor-init:v{{ .Major }}-arm64"
       - "golemnetwork/op-conductor-init:v{{ .Major }}.{{ .Minor }}-arm64"
       - "golemnetwork/op-conductor-init:latest-arm64"
-    dockerfile: Dockerfile
+    dockerfile: Dockerfile.goreleaser
     use: buildx
-    extra_files:
-      - go.mod
-      - go.sum
+    ids:
+      - op-conductor-init
     build_flag_templates:
       - "--platform=linux/arm64"
       - "--label=org.opencontainers.image.created={{.Date}}"

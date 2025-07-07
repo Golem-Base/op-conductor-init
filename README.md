@@ -130,18 +130,6 @@ raft-state/
    - The initial leader will begin sequencing immediately
    - No manual bootstrap or peer addition required
 
-## Testing with Docker
-
-Quick test using Docker Compose:
-
-```bash
-cd docker
-./test.sh test  # Run generation and verification
-./test.sh inspect  # Examine generated files
-```
-
-See [docker/README.md](docker/README.md) for detailed testing instructions.
-
 ## Building
 
 Using [just](https://github.com/casey/just):

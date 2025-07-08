@@ -1,122 +1,68 @@
 package store
 
 import (
-	"encoding/binary"
 	"fmt"
+
+	"github.com/hashicorp/go-msgpack/codec"
+	"github.com/hashicorp/raft"
 )
 
 // EncodeConfiguration encodes a Configuration into the format expected by HashiCorp Raft
 func EncodeConfiguration(config Configuration) ([]byte, error) {
-	// Calculate size
-	size := 1 // protocol version
-	for _, server := range config.Servers {
-		size += 1                   // suffrage
-		size += 8                   // id length
-		size += len(server.ID)      // id
-		size += 8                   // address length
-		size += len(server.Address) // address
+	// Convert to HashiCorp Raft Configuration
+	raftConfig := raft.Configuration{
+		Servers: make([]raft.Server, len(config.Servers)),
 	}
 
-	buf := make([]byte, 0, size)
-
-	// Protocol version (1)
-	buf = append(buf, 1)
-
-	// Encode servers
-	for _, server := range config.Servers {
-		// Suffrage
-		buf = append(buf, server.Suffrage)
-
-		// ID length and value
-		idLen := uint64(len(server.ID))
-		buf = binary.BigEndian.AppendUint64(buf, idLen)
-		buf = append(buf, []byte(server.ID)...)
-
-		// Address length and value
-		addrLen := uint64(len(server.Address))
-		buf = binary.BigEndian.AppendUint64(buf, addrLen)
-		buf = append(buf, []byte(server.Address)...)
+	for i, server := range config.Servers {
+		raftConfig.Servers[i] = raft.Server{
+			ID:       raft.ServerID(server.ID),
+			Address:  raft.ServerAddress(server.Address),
+			Suffrage: raft.ServerSuffrage(server.Suffrage),
+		}
 	}
 
-	return buf, nil
-}
-
-// encodeLogEntry encodes a LogEntry into the format expected by HashiCorp Raft
-func encodeLogEntry(entry *LogEntry) ([]byte, error) {
-	// Calculate total size
-	size := 8 + 8 + 1 + len(entry.Data) // term + index + type + data
-	buf := make([]byte, 0, size)
-
-	// Term (8 bytes)
-	buf = binary.BigEndian.AppendUint64(buf, entry.Term)
-
-	// Index (8 bytes)
-	buf = binary.BigEndian.AppendUint64(buf, entry.Index)
-
-	// Type (1 byte)
-	buf = append(buf, entry.Type)
-
-	// Data
-	buf = append(buf, entry.Data...)
-
-	return buf, nil
+	// Use Raft's built-in encoding
+	return raft.EncodeConfiguration(raftConfig), nil
 }
 
 // decodeConfiguration decodes a Configuration from bytes
 func decodeConfiguration(data []byte) (*Configuration, error) {
-	if len(data) < 1 {
-		return nil, fmt.Errorf("configuration data too short")
-	}
-
-	// Check protocol version
-	version := data[0]
-	if version != 1 {
-		return nil, fmt.Errorf("unsupported configuration version: %d", version)
-	}
+	raftConfig := raft.DecodeConfiguration(data)
 
 	config := &Configuration{
-		Servers: make([]Server, 0),
+		Servers: make([]Server, len(raftConfig.Servers)),
 	}
 
-	idx := 1
-	for idx < len(data) {
-		if idx+1 > len(data) {
-			return nil, fmt.Errorf("incomplete server entry")
+	for i, server := range raftConfig.Servers {
+		config.Servers[i] = Server{
+			ID:       string(server.ID),
+			Address:  string(server.Address),
+			Suffrage: uint8(server.Suffrage),
 		}
-
-		server := Server{
-			Suffrage: data[idx],
-		}
-		idx++
-
-		// Read ID
-		if idx+8 > len(data) {
-			return nil, fmt.Errorf("incomplete ID length")
-		}
-		idLen := binary.BigEndian.Uint64(data[idx : idx+8])
-		idx += 8
-
-		if idx+int(idLen) > len(data) {
-			return nil, fmt.Errorf("incomplete ID data")
-		}
-		server.ID = string(data[idx : idx+int(idLen)])
-		idx += int(idLen)
-
-		// Read Address
-		if idx+8 > len(data) {
-			return nil, fmt.Errorf("incomplete address length")
-		}
-		addrLen := binary.BigEndian.Uint64(data[idx : idx+8])
-		idx += 8
-
-		if idx+int(addrLen) > len(data) {
-			return nil, fmt.Errorf("incomplete address data")
-		}
-		server.Address = string(data[idx : idx+int(addrLen)])
-		idx += int(addrLen)
-
-		config.Servers = append(config.Servers, server)
 	}
 
 	return config, nil
+}
+
+// encodeLogEntry encodes a log entry using msgpack format expected by HashiCorp Raft
+func encodeLogEntry(entry *LogEntry) ([]byte, error) {
+	raftLog := &raft.Log{
+		Index:      entry.Index,
+		Term:       entry.Term,
+		Type:       raft.LogType(entry.Type),
+		Data:       entry.Data,
+		Extensions: nil,
+		// AppendedAt is automatically set to zero value
+	}
+
+	var handle codec.MsgpackHandle
+
+	var buf []byte
+	encoder := codec.NewEncoderBytes(&buf, &handle)
+	if err := encoder.Encode(raftLog); err != nil {
+		return nil, fmt.Errorf("failed to msgpack encode log entry: %w", err)
+	}
+
+	return buf, nil
 }

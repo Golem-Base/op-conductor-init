@@ -1,6 +1,7 @@
 package store
 
 import (
+	"bytes"
 	"fmt"
 
 	"github.com/hashicorp/go-msgpack/codec"
@@ -47,7 +48,7 @@ func decodeConfiguration(data []byte) (*Configuration, error) {
 
 // encodeLogEntry encodes a log entry using msgpack format expected by HashiCorp Raft
 func encodeLogEntry(entry *LogEntry) ([]byte, error) {
-	raftLog := &raft.Log{
+	raftLog := raft.Log{
 		Index:      entry.Index,
 		Term:       entry.Term,
 		Type:       raft.LogType(entry.Type),
@@ -56,13 +57,13 @@ func encodeLogEntry(entry *LogEntry) ([]byte, error) {
 		// AppendedAt is automatically set to zero value
 	}
 
-	var handle codec.MsgpackHandle
+	buf := bytes.NewBuffer(nil)
+	handle := codec.MsgpackHandle{}
+	encoder := codec.NewEncoder(buf, &handle)
 
-	var buf []byte
-	encoder := codec.NewEncoderBytes(&buf, &handle)
 	if err := encoder.Encode(raftLog); err != nil {
 		return nil, fmt.Errorf("failed to msgpack encode log entry: %w", err)
 	}
 
-	return buf, nil
+	return buf.Bytes(), nil
 }

@@ -4,14 +4,14 @@ import (
 	"encoding/binary"
 )
 
-// Constants for Raft log types
+// Constants for Raft log types (must match github.com/hashicorp/raft)
 const (
 	LogCommand              uint8 = 0
-	LogConfiguration        uint8 = 1
+	LogNoop                 uint8 = 1
 	LogAddPeerDeprecated    uint8 = 2
 	LogRemovePeerDeprecated uint8 = 3
-	LogNoop                 uint8 = 4
-	LogBarrier              uint8 = 5
+	LogBarrier              uint8 = 4
+	LogConfiguration        uint8 = 5
 )
 
 // Constants for server suffrage

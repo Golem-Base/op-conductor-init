@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/ethereum/go-ethereum/log"
+	"github.com/hashicorp/raft"
 
 	"github.com/golem-base/op-conductor-init/pkg/config"
 	"github.com/golem-base/op-conductor-init/pkg/store"
@@ -64,7 +65,7 @@ func (g *Generator) Generate(ctx context.Context) error {
 		return fmt.Errorf("failed to create output directory: %w", err)
 	}
 
-	// Create configuration entry
+	// Create configuration entry using official raft types
 	configEntry := g.createConfigurationEntry()
 
 	// Generate state for each node
@@ -89,37 +90,34 @@ func (g *Generator) Generate(ctx context.Context) error {
 }
 
 // createConfigurationEntry creates the initial Raft configuration log entry
-func (g *Generator) createConfigurationEntry() *store.LogEntry {
-	servers := make([]store.Server, len(g.cfg.Nodes))
+func (g *Generator) createConfigurationEntry() *raft.Log {
+	servers := make([]raft.Server, len(g.cfg.Nodes))
 
 	for i, node := range g.cfg.Nodes {
-		servers[i] = store.Server{
-			Suffrage: store.Voter,
-			ID:       node.ServerID,
-			Address:  node.Address,
+		servers[i] = raft.Server{
+			Suffrage: raft.Voter,
+			ID:       raft.ServerID(node.ServerID),
+			Address:  raft.ServerAddress(node.Address),
 		}
 	}
 
-	config := store.Configuration{
+	config := raft.Configuration{
 		Servers: servers,
 	}
 
-	data, err := store.EncodeConfiguration(config)
-	if err != nil {
-		// This should never happen with valid input
-		panic(fmt.Sprintf("failed to encode configuration: %v", err))
-	}
+	// Encode configuration using official raft encoding
+	data := raft.EncodeConfiguration(config)
 
-	return &store.LogEntry{
+	return &raft.Log{
 		Index: 1,
 		Term:  g.cfg.InitialTerm,
-		Type:  store.LogConfiguration,
+		Type:  raft.LogConfiguration,
 		Data:  data,
 	}
 }
 
 // createNodeState creates the Raft state files for a single node
-func (g *Generator) createNodeState(node config.NodeConfig, configEntry *store.LogEntry, isLeader bool) error {
+func (g *Generator) createNodeState(node config.NodeConfig, configEntry *raft.Log, isLeader bool) error {
 	nodeDir := filepath.Join(g.cfg.OutputDir, node.ServerID)
 
 	// Create node directory

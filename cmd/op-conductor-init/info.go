@@ -5,10 +5,9 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/hashicorp/raft"
 	"github.com/urfave/cli/v2"
 	bolt "go.etcd.io/bbolt"
-
-	"github.com/golem-base/op-conductor-init/pkg/store"
 )
 
 // InfoAction handles the info subcommand
@@ -130,7 +129,7 @@ func showLogStoreInfo(path string) error {
 					index, term, getLogTypeName(logType), dataLen)
 
 				// If it's a configuration entry, decode it
-				if logType == store.LogConfiguration && len(v) > 17 {
+				if logType == uint8(raft.LogConfiguration) && len(v) > 17 {
 					members := decodeConfiguration(v[17:])
 					if len(members) > 0 {
 						clusterMembers = members
@@ -160,16 +159,16 @@ func showLogStoreInfo(path string) error {
 }
 
 func getLogTypeName(logType uint8) string {
-	switch logType {
-	case store.LogCommand:
+	switch raft.LogType(logType) {
+	case raft.LogCommand:
 		return "Command"
-	case store.LogConfiguration:
+	case raft.LogConfiguration:
 		return "Configuration"
-	case store.LogAddPeerDeprecated:
+	case raft.LogAddPeerDeprecated:
 		return "AddPeer (deprecated)"
-	case store.LogRemovePeerDeprecated:
+	case raft.LogRemovePeerDeprecated:
 		return "RemovePeer (deprecated)"
-	case store.LogBarrier:
+	case raft.LogBarrier:
 		return "Barrier"
 	default:
 		return fmt.Sprintf("Unknown(%d)", logType)

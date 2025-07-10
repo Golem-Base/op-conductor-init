@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/hashicorp/raft"
 	"github.com/urfave/cli/v2"
 	bolt "go.etcd.io/bbolt"
 )
@@ -107,7 +108,7 @@ func verifyLogStore(path string) error {
 					index, term, logIndex, logType, dataLen)
 
 				// If it's a configuration entry, try to decode it
-				if logType == 1 { // LogConfiguration
+				if logType == uint8(raft.LogConfiguration) {
 					fmt.Printf("      Configuration data (first 50 bytes): %x\n", v[17:min(67, len(v))])
 				}
 			}

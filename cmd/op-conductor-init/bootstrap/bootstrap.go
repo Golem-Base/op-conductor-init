@@ -43,18 +43,11 @@ func BootstrapClusterMain(ctx *cli.Context, closeApp context.CancelCauseFunc) (c
 		return nil, fmt.Errorf("failed to read config: %w", err)
 	}
 
-	// We don't need the RaftAutoBootstrapNetwork flag anymore
-	// Our custom OpConductor always auto-bootstraps when there's no unsafe head
-	log.Info("Bootstrap operation will auto-bootstrap from execution layer when needed")
-
-	// Metrics are created internally by our custom OpConductor
-
-	// Use our custom OpConductor from service.go that has auto-bootstrap built in
 	c, err := bootstrapconductor.New(
 		ctx.Context,
 		cfg,
 		log,
-		"bootstrap-v1.0.0", // Version string for bootstrap
+		"1",
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create conductor: %w", err)

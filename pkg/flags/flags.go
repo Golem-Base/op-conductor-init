@@ -51,6 +51,25 @@ var (
 		Value:   false,
 		EnvVars: opservice.PrefixEnvVar(EnvVarPrefix, "FORCE"),
 	}
+	// Flags for raft subcommands
+	StateDirFlag = &cli.StringFlag{
+		Name:     "state-dir",
+		Usage:    "Directory containing raft state files",
+		Required: true,
+		EnvVars:  opservice.PrefixEnvVar(EnvVarPrefix, "STATE_DIR"),
+	}
+	BackupDirFlag = &cli.StringFlag{
+		Name:     "backup-dir",
+		Usage:    "Directory for backup operations",
+		Required: true,
+		EnvVars:  opservice.PrefixEnvVar(EnvVarPrefix, "BACKUP_DIR"),
+	}
+	RestoreForceFlag = &cli.BoolFlag{
+		Name:    "force",
+		Usage:   "Force restore without confirmation prompts",
+		Value:   false,
+		EnvVars: opservice.PrefixEnvVar(EnvVarPrefix, "RESTORE_FORCE"),
+	}
 )
 
 var Flags = []cli.Flag{
